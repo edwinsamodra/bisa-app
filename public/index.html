@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BISA - Aplikasi Tracking Bimbel</title>
+  
+  <!-- Google Fonts - Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#000d5c',
+              yellow: '#ffde59',
+              lightBlue: '#eef2ff',
+              lightYellow: '#fffdf0',
+              textDark: '#0f172a',
+              softBg: '#f8fafc'
+            }
+          },
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Reset and ensure base size is locked */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Lock layout only on mobile viewports to prevent address bar collapse / scrolling jumping */
+    @media (max-width: 639px) {
+      html, body {
+        position: fixed !important;
+        overflow: hidden !important;
+        height: 100% !important;
+        height: -webkit-fill-available !important;
+      }
+      .print-area-wrapper {
+        height: 100% !important;
+        height: -webkit-fill-available !important;
+      }
+    }
+
+    @media (min-width: 640px) {
+      body {
+        min-height: 100vh;
+      }
+    }
+
+    /* Styling to make scrollbars look nice */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    /* Print styling rules: when printing the Raport, hide mockup frame and non-printable UI elements */
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        position: relative !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      /* Hide all device mockup elements, tabs, buttons, forms, headers */
+      .no-print, header, nav, button, .modal, .tabs-container {
+        display: none !important;
+      }
+      /* Expand the mobile container to full standard A4 width */
+      .print-area-wrapper {
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        min-height: auto !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .print-content {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center font-sans p-0 sm:p-4 text-brand-textDark antialiased">
+
+  <!-- Mobile Wrapper Frame: Centered mock phone on desktop, full screen on mobile -->
+  <div 
+    x-data="appState" 
+    class="w-full max-w-[480px] h-full sm:h-[840px] bg-brand-softBg shadow-2xl rounded-none sm:rounded-[28px] overflow-hidden flex flex-col border border-slate-200/50 relative print-area-wrapper"
+  >
+    
+    <!-- Top Header: Deep Navy Blue (Hidden on Print) -->
+    <header class="bg-brand-blue text-white px-5 py-4 flex items-center justify-between shadow-md relative z-10 no-print">
+      <div class="flex items-center space-x-2">
+        <div class="bg-brand-yellow text-brand-blue rounded-lg p-1.5 font-bold text-lg">
+          ✏️
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">BISA</h1>
+          <p class="text-xs text-brand-yellow font-light">Input Operasional & Tagihan</p>
+        </div>
+      </div>
+      
+      <!-- Quick Status Indicator -->
+      <span 
+        class="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white flex items-center gap-1"
+        :class="loading ? 'animate-pulse' : ''"
+      >
+        <span class="w-2 h-2 rounded-full bg-emerald-400" :class="loading ? 'bg-amber-400' : ''"></span>
+        <span x-text="loading ? 'Proses...' : 'Online'"></span>
+      </span>
+    </header>
+
+
+    <!-- Main Content Area: Scrollable (Except print layout) -->
+    <main class="flex-1 overflow-y-auto print-content">
+      
+      <!-- ======================================================================= -->
+      <!-- TAB 1: DASHBOARD -->
+      <!-- ======================================================================= -->
+      <div x-show="currentTab === 'dashboard'" class="p-5 space-y-5 no-print" x-transition>
+        <!-- Welcome banner -->
+        <div class="bg-gradient-to-r from-brand-blue to-blue-900 text-white p-5 rounded-3xl shadow-md relative overflow-hidden">
+          <div class="relative z-10 space-y-1">
+            <h2 class="text-xl font-bold">Halo Kakak Pengajar! 👋</h2>
+            <p class="text-sm text-brand-yellow font-light leading-relaxed">Catat absensi dan iuran bimbel hari ini dengan mudah. Semua data tersimpan otomatis.</p>
+          </div>
+          <!-- Absolute decoration circles -->
+          <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-brand-yellow/10 rounded-full"></div>
+          <div class="absolute right-10 -top-10 w-24 h-24 bg-white/5 rounded-full"></div>
+        </div>
+
+        <!-- Dashboard Cards Grid -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Total Income -->
+          <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl shadow-sm space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">💰</span>
+              <span class="text-xs text-emerald-800 font-semibold uppercase tracking-wider">Uang Masuk</span>
+            </div>
+            <p class="text-lg font-bold text-emerald-700" x-text="formatRupiah(summary.totalPendapatan)"></p>
+            <span class="text-[10px] text-slate-400">Total iuran terkumpul</span>
+          </div>
+
+          <!-- Total Receivables (Piutang) -->
+          <div class="bg-rose-50 border border-rose-100 p-4 rounded-2xl shadow-sm space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">💸</span>
+              <span class="text-xs text-rose-800 font-semibold uppercase tracking-wider">Total Piutang</span>
+            </div>
+            <p class="text-lg font-bold text-rose-600" x-text="formatRupiah(summary.totalPiutang)"></p>
+            <span class="text-[10px] text-slate-400">Belum dibayar ortu</span>
+          </div>
+
+          <!-- Total Students -->
+          <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl shadow-sm space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">👶</span>
+              <span class="text-xs text-blue-800 font-semibold uppercase tracking-wider">Siswa Aktif</span>
+            </div>
+            <p class="text-xl font-bold text-brand-blue" x-text="summary.totalSiswa + ' Anak'"></p>
+            <span class="text-[10px] text-slate-400">Terdaftar di database</span>
+          </div>
+
+          <!-- Total Sessions This Month -->
+          <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl shadow-sm space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🗓️</span>
+              <span class="text-xs text-amber-800 font-semibold uppercase tracking-wider">Bulan Ini</span>
+            </div>
+            <p class="text-xl font-bold text-amber-700" x-text="summary.totalPertemuanBulanIni + ' Pertemuan'"></p>
+            <span class="text-[10px] text-slate-400">Sesi terinput bulan ini</span>
+          </div>
+        </div>
+
+        <!-- Quick Action / Shortcut Section -->
+        <div class="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm space-y-3">
+          <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Akses Cepat</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button 
+              @click="openOperasionalModal()" 
+              class="bg-brand-blue hover:bg-brand-darkBlue text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex flex-col items-center justify-center gap-1 text-center"
+            >
+              <span class="text-lg">➕📝</span>
+              <span class="text-xs">Catat Pertemuan</span>
+            </button>
+            <button 
+              @click="openSiswaModal()" 
+              class="bg-brand-yellow hover:bg-amber-400 text-brand-blue font-bold py-3 px-4 rounded-xl shadow-md transition-all flex flex-col items-center justify-center gap-1 text-center"
+            >
+              <span class="text-lg">➕👶</span>
+              <span class="text-xs">Tambah Siswa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Info / Tip Box -->
+        <div class="bg-brand-lightYellow border border-amber-200/50 p-4 rounded-2xl text-xs text-amber-800 leading-relaxed flex gap-3">
+          <span class="text-xl">💡</span>
+          <div>
+            <span class="font-bold">Tips Penagihan:</span> Gunakan Tab <span class="font-semibold text-brand-blue">"Siswa"</span> untuk mengirim reminder tagihan via WhatsApp secara instan dengan nominal kekurangan yang otomatis terhitung.
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- TAB 2: OPERASIONAL (PERTEMUAN) -->
+      <!-- ======================================================================= -->
+      <div x-show="currentTab === 'operasional'" class="p-5 space-y-4 no-print" x-transition>
+        <!-- Section Header -->
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-brand-blue">Daftar Pertemuan</h2>
+            <p class="text-xs text-slate-400">Riwayat sesi belajar dan transaksi</p>
+          </div>
+          <button 
+            @click="openOperasionalModal()" 
+            class="bg-brand-blue hover:bg-brand-darkBlue text-white font-bold px-4 py-2.5 rounded-xl shadow-md text-xs transition-colors flex items-center gap-1.5"
+          >
+            ➕ Sesi Baru
+          </button>
+        </div>
+
+        <!-- Search / Filter in list -->
+        <div class="relative">
+          <input 
+            type="text" 
+            x-model="operasionalSearchQuery" 
+            placeholder="Cari nama siswa/catatan..." 
+            class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue shadow-sm"
+          />
+          <span class="absolute left-3 top-3 text-slate-400 text-xs">🔍</span>
+          <button 
+            x-show="operasionalSearchQuery" 
+            @click="operasionalSearchQuery = ''" 
+            class="absolute right-3 top-2.5 text-slate-400 text-xs py-1"
+          >
+            Batal
+          </button>
+        </div>
+
+        <!-- List Elements -->
+        <div class="space-y-3">
+          <template x-for="op in filteredOperasional" :key="op.id">
+            <div 
+              class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3 relative"
+              :class="op.statusAbsen === 'Hadir' ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-rose-500'"
+            >
+              <!-- Top Header Row -->
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-base font-bold text-slate-800">
+                    <span x-text="op.siswaNama"></span>
+                    <span class="text-xs font-semibold px-1.5 py-0.5 bg-brand-lightBlue text-brand-blue rounded-md ml-1.5" x-text="'Sesi #' + op.pertemuanKe"></span>
+                  </h3>
+                  <div class="flex items-center gap-2 mt-1 text-xs text-slate-400 font-medium">
+                    <span>📅 <span x-text="formatSimpleDate(op.tanggal)"></span></span>
+                    <span>•</span>
+                    <span>👩‍🏫 <span x-text="op.guruNama"></span></span>
+                  </div>
+                </div>
+
+                <!-- Absensi & Kelas Badges -->
+                <div class="flex flex-col items-end gap-1">
+                  <span 
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-md"
+                    :class="op.statusAbsen === 'Hadir' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                            op.statusAbsen === 'Izin' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                            'bg-rose-50 text-rose-700 border border-rose-100'"
+                    x-text="op.statusAbsen"
+                  ></span>
+                  <span 
+                    class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase border border-slate-200/50"
+                    x-text="op.jenisKelas"
+                  ></span>
+                </div>
+              </div>
+
+              <!-- Financial Row -->
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span class="block text-slate-400 text-[10px]">Tagihan</span>
+                  <span class="font-bold text-slate-700" x-text="formatRupiah(op.tagihan)"></span>
+                </div>
+                <div>
+                  <span class="block text-slate-400 text-[10px]">Diterima</span>
+                  <span class="font-bold text-emerald-600" x-text="formatRupiah(op.jumlahDiterima)"></span>
+                </div>
+              </div>
+
+              <!-- Coverage / Balance Status Indicator -->
+              <div class="flex items-center justify-between text-xs pt-1">
+                <span class="text-slate-400 text-[11px] font-medium">Status Sesi Ini:</span>
+                <span 
+                  class="font-bold px-2 py-0.5 rounded text-[11px] border"
+                  :class="op.tercover ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'"
+                >
+                  <span x-text="op.tercover ? '✅ Terbayar' : '❌ Belum Lunas'"></span>
+                  <template x-if="op.tercover && op.saldoHinggaSesi > 0">
+                    <span class="text-[10px] font-normal" x-text="'(Sisa Deposit: ' + formatRupiah(op.saldoHinggaSesi) + ')'"></span>
+                  </template>
+                  <template x-if="!op.tercover">
+                    <span class="text-[10px] font-normal" x-text="'(Kurang: ' + formatRupiah(Math.abs(op.saldoHinggaSesi)) + ')'"></span>
+                  </template>
+                </span>
+              </div>
+
+              <!-- Lesson Note -->
+              <p x-show="op.catatan" class="text-xs text-slate-600 leading-relaxed italic bg-amber-50/50 p-2 rounded-lg border border-amber-100/30" x-text="op.catatan"></p>
+
+              <!-- Actions line -->
+              <div class="flex justify-end gap-2 pt-2 border-t border-slate-50 text-[11px]">
+                <button 
+                  @click="openEditOperasional(op)"
+                  class="px-2.5 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-brand-yellow hover:text-brand-blue transition-colors"
+                >
+                  ✏️ Edit Sesi
+                </button>
+                <button 
+                  @click="deleteOperasional(op.id)"
+                  class="px-2.5 py-1.5 bg-rose-50 text-rose-600 font-bold rounded-lg hover:bg-rose-100 transition-colors"
+                >
+                  🗑️ Hapus
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- Empty State -->
+          <div x-show="filteredOperasional.length === 0" class="bg-white rounded-2xl p-8 text-center border border-slate-100">
+            <span class="text-4xl block mb-2">📁</span>
+            <h4 class="font-bold text-slate-700">Belum ada pertemuan</h4>
+            <p class="text-xs text-slate-400 mt-1">Silakan tambah catatan pertemuan baru.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- TAB 3: DATA SISWA -->
+      <!-- ======================================================================= -->
+      <div x-show="currentTab === 'siswa'" class="p-5 space-y-4 no-print" x-transition>
+        <!-- Section Header -->
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-brand-blue">Daftar Siswa</h2>
+            <p class="text-xs text-slate-400">Pengelolaan profil & keuangan siswa</p>
+          </div>
+          <button 
+            @click="openSiswaModal()" 
+            class="bg-brand-blue hover:bg-brand-darkBlue text-white font-bold px-4 py-2.5 rounded-xl shadow-md text-xs transition-colors"
+          >
+            ➕ Siswa Baru
+          </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative">
+          <input 
+            type="text" 
+            x-model="siswaSearchQuery" 
+            placeholder="Cari nama/sekolah/orang tua..." 
+            class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue shadow-sm"
+          />
+          <span class="absolute left-3 top-3 text-slate-400 text-xs">🔍</span>
+          <button 
+            x-show="siswaSearchQuery" 
+            @click="siswaSearchQuery = ''" 
+            class="absolute right-3 top-2.5 text-slate-400 text-xs py-1"
+          >
+            Batal
+          </button>
+        </div>
+
+        <!-- Siswa Cards List -->
+        <div class="space-y-3">
+          <template x-for="s in filteredSiswa" :key="s.id">
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-base font-bold text-slate-800" x-text="s.nama"></h3>
+                  <div class="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+                    <span x-text="s.jenjangKelas"></span>
+                    <span>•</span>
+                    <span class="font-medium text-slate-500" x-text="s.jenisKelas"></span>
+                    <span>•</span>
+                    <span x-text="s.asalSekolah"></span>
+                  </div>
+                </div>
+
+                <!-- Financial Balance Badge -->
+                <div class="text-right">
+                  <span 
+                    class="text-xs font-bold px-2.5 py-1 rounded-full block border"
+                    :class="s.saldo === 0 ? 'bg-slate-50 text-slate-600 border-slate-200' :
+                            s.saldo > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                            'bg-rose-50 text-rose-700 border-rose-100'"
+                    x-text="s.saldo === 0 ? 'Lunas' :
+                            s.saldo > 0 ? '+ ' + formatRupiah(s.saldo) :
+                            '- ' + formatRupiah(Math.abs(s.saldo))"
+                  ></span>
+                  <span class="text-[9px] text-slate-400 block mt-1">Saldo Kumulatif</span>
+                </div>
+              </div>
+
+              <!-- Parent Details Box -->
+              <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-1.5 text-xs text-slate-600">
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Nama Ortu:</span>
+                  <span class="font-medium text-slate-700" x-text="s.namaOrangTua || '-'"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Tarif Default:</span>
+                  <span class="font-medium text-slate-700" x-text="formatRupiah(s.tarifDefault) + (s.jenisKelas === 'Private' ? ' / sesi' : ' / bulan')"></span>
+                </div>
+                <div class="flex justify-between items-center pt-1 border-t border-slate-200/50">
+                  <span class="text-slate-400">Hubungi:</span>
+                  <div class="flex gap-2">
+                    <a 
+                      x-show="s.whatsappSiswa"
+                      :href="'https://wa.me/' + formatPhoneNumber(s.whatsappSiswa)" 
+                      target="_blank" 
+                      class="px-2 py-1 bg-emerald-50 text-emerald-600 font-semibold rounded hover:bg-emerald-100"
+                    >
+                      📱 WA Siswa
+                    </a>
+                    <a 
+                      x-show="s.whatsappOrtu"
+                      :href="'https://wa.me/' + formatPhoneNumber(s.whatsappOrtu)" 
+                      target="_blank" 
+                      class="px-2 py-1 bg-brand-blue text-white font-semibold rounded hover:bg-blue-900"
+                    >
+                      📞 WA Ortu
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions line -->
+              <div class="flex justify-between items-center pt-2 border-t border-slate-50 text-[11px]">
+                <!-- Quick Send Whatsapp Billing reminder if they have deficit -->
+                <button 
+                  x-show="s.saldo < 0 && s.whatsappOrtu"
+                  @click="sendWhatsAppReminder(s)"
+                  class="px-2.5 py-1.5 bg-amber-50 hover:bg-brand-yellow text-amber-700 hover:text-brand-blue font-bold rounded-lg transition-colors flex items-center gap-1"
+                >
+                  💬 Kirim Tagihan Ortu
+                </button>
+                <div x-show="s.saldo >= 0" class="text-slate-400 italic text-[10px]">
+                  Tagihan lunas / deposit aktif.
+                </div>
+                
+                <div class="flex gap-2">
+                  <button 
+                    @click="openEditSiswa(s)"
+                    class="px-2.5 py-1.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button 
+                    @click="deleteSiswa(s.id)"
+                    class="px-2.5 py-1.5 bg-rose-50 text-rose-600 font-bold rounded-lg hover:bg-rose-100"
+                  >
+                    🗑️ Hapus
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Empty State -->
+          <div x-show="filteredSiswa.length === 0" class="bg-white rounded-2xl p-8 text-center border border-slate-100">
+            <span class="text-4xl block mb-2">📁</span>
+            <h4 class="font-bold text-slate-700">Tidak ada siswa terdaftar</h4>
+            <p class="text-xs text-slate-400 mt-1">Silakan tambahkan data siswa baru.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- TAB 4: DATA GURU -->
+      <!-- ======================================================================= -->
+      <div x-show="currentTab === 'guru'" class="p-5 space-y-4 no-print" x-transition>
+        <!-- Section Header -->
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-brand-blue">Daftar Guru</h2>
+            <p class="text-xs text-slate-400">Pengelolaan tentor bimbingan belajar</p>
+          </div>
+          <button 
+            @click="openGuruModal()" 
+            class="bg-brand-blue hover:bg-brand-darkBlue text-white font-bold px-4 py-2.5 rounded-xl shadow-md text-xs transition-colors"
+          >
+            ➕ Guru Baru
+          </button>
+        </div>
+
+        <!-- Guru Cards List -->
+        <div class="space-y-3">
+          <template x-for="g in guruList" :key="g.id">
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-bold text-slate-800" x-text="g.nama"></h3>
+                <span class="text-xs text-slate-400 block mt-0.5" x-text="g.whatsapp ? 'WA: ' + g.whatsapp : 'Belum ada kontak WA'"></span>
+              </div>
+              
+              <div class="flex gap-2">
+                <!-- Chat WA -->
+                <a 
+                  x-show="g.whatsapp"
+                  :href="'https://wa.me/' + formatPhoneNumber(g.whatsapp)"
+                  target="_blank"
+                  class="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-semibold"
+                  title="Hubungi Guru"
+                >
+                  💬 Chat
+                </a>
+                <button 
+                  @click="openEditGuru(g)"
+                  class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-semibold"
+                >
+                  ✏️ Edit
+                </button>
+                <button 
+                  @click="deleteGuru(g.id)"
+                  class="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors text-sm font-semibold"
+                >
+                  🗑️ Hapus
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- Empty State -->
+          <div x-show="guruList.length === 0" class="bg-white rounded-2xl p-8 text-center border border-slate-100">
+            <span class="text-4xl block mb-2">📁</span>
+            <h4 class="font-bold text-slate-700">Belum ada data guru</h4>
+            <p class="text-xs text-slate-400 mt-1">Silakan tambahkan data guru baru.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- TAB 5: RAPORT LES & BILL (INVOICE GENERATOR) -->
+      <!-- ======================================================================= -->
+      <div x-show="currentTab === 'raport'" class="p-5 space-y-4 print-content" x-transition>
+        
+        <!-- Selection Block (Hidden on Print) -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-3 no-print">
+          <h2 class="text-base font-bold text-brand-blue">Raport Les & Tagihan</h2>
+          <p class="text-xs text-slate-400">Pilih nama siswa untuk memuat riwayat belajar, rekap absensi, dan iuran.</p>
+          
+          <div class="space-y-3">
+            <select 
+              x-model="selectedReportSiswaId"
+              @change="fetchReport(selectedReportSiswaId)"
+              class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
+            >
+              <option value="">-- Pilih Siswa --</option>
+              <template x-for="s in siswaList" :key="s.id">
+                <option :value="s.id" x-text="s.nama + ' (' + s.jenisKelas + ')'"></option>
+              </template>
+            </select>
+            
+            <div x-show="reportData" class="flex gap-2">
+              <button 
+                @click="window.print()" 
+                class="flex-1 bg-brand-blue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-sm"
+              >
+                🖨️ Cetak / Simpan PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Student Selected Placeholder (Hidden on Print) -->
+        <div 
+          x-show="!reportData" 
+          class="bg-white rounded-2xl p-10 text-center border border-slate-100 shadow-sm no-print"
+        >
+          <span class="text-4xl block mb-2">📄</span>
+          <h3 class="text-base font-bold text-slate-600">Laporan belum dipilih</h3>
+          <p class="text-xs text-slate-400 mt-1">Pilih nama siswa di atas untuk merender laporan lengkap.</p>
+        </div>
+
+        <!-- The Report / Invoice Print Area -->
+        <div 
+          x-show="reportData" 
+          class="bg-white rounded-3xl p-6 border border-slate-100 shadow-lg space-y-6 print-content"
+          style="display: none;"
+        >
+          <!-- Print-Only Header Logo & Info -->
+          <div class="flex justify-between items-start border-b-2 border-brand-blue pb-4">
+            <div>
+              <h1 class="text-2xl font-bold text-brand-blue">LAPORAN KEGIATAN BELAJAR</h1>
+              <p class="text-xs text-slate-500">Bimbingan Belajar BISA • Laporan Kehadiran & Pembayaran</p>
+            </div>
+            <div class="text-right text-xs text-slate-600">
+              <p class="font-bold">Tanggal Cetak:</p>
+              <p x-text="formatSimpleDate(new Date().toISOString().split('T')[0])"></p>
+            </div>
+          </div>
+
+          <!-- Student Profile Grid -->
+          <div class="grid grid-cols-2 gap-4 text-sm border-b border-slate-100 pb-4">
+            <div class="space-y-1">
+              <p class="text-slate-400 text-xs uppercase font-medium">Siswa</p>
+              <p class="font-bold text-brand-blue text-base" x-text="reportData?.siswa?.nama"></p>
+              <p class="text-slate-600 font-light" x-text="reportData?.siswa?.jenjangKelas + ' • ' + reportData?.siswa?.asalSekolah"></p>
+            </div>
+            <div class="space-y-1">
+              <p class="text-slate-400 text-xs uppercase font-medium">Wali / Orang Tua</p>
+              <p class="font-bold text-slate-700" x-text="reportData?.siswa?.namaOrangTua || '-'"></p>
+              <p class="text-xs text-slate-500 font-light" x-text="'WA: ' + (reportData?.siswa?.whatsappOrtu || '-')"></p>
+            </div>
+          </div>
+
+          <!-- Summary Scorecards in Report -->
+          <div class="grid grid-cols-3 gap-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+            <div>
+              <span class="block text-[10px] text-slate-400 uppercase font-semibold">Total Sesi</span>
+              <span class="text-lg font-bold text-brand-blue" x-text="reportData?.history?.length || 0"></span>
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-400 uppercase font-semibold">Uang Masuk</span>
+              <span class="text-lg font-bold text-emerald-600" x-text="formatRupiah(reportData?.totalDiterima)"></span>
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-400 uppercase font-semibold">Saldo Akhir</span>
+              <span 
+                class="text-sm font-bold block mt-1 inline-block px-2 py-0.5 rounded-md border"
+                :class="reportData?.saldoKumulatif === 0 ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                        reportData?.saldoKumulatif > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                        'bg-rose-50 text-rose-700 border-rose-100'"
+                x-text="reportData?.saldoKumulatif === 0 ? 'LUNAS' :
+                        reportData?.saldoKumulatif > 0 ? 'Kelebihan (+ ' + formatRupiah(reportData?.saldoKumulatif) + ')' :
+                        'Kekurangan (- ' + formatRupiah(Math.abs(reportData?.saldoKumulatif)) + ')'"
+              ></span>
+            </div>
+          </div>
+
+          <!-- History Table -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Rincian Pertemuan & Keuangan</h3>
+            
+            <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-tight text-[10px]">
+                    <th class="py-2.5 px-3">Sesi / Tanggal</th>
+                    <th class="py-2.5 px-2">Guru / Absen</th>
+                    <th class="py-2.5 px-2 text-right">Tagihan</th>
+                    <th class="py-2.5 px-2 text-right">Diterima</th>
+                    <th class="py-2.5 px-3 text-right">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                  <template x-for="(op, idx) in reportData?.history" :key="op.id">
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-2.5 px-3 whitespace-nowrap font-medium text-slate-900">
+                        <span class="inline-block px-1.5 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded font-semibold text-[10px] mr-1.5" x-text="'#' + (idx + 1)"></span>
+                        <span x-text="formatSimpleDate(op.tanggal)"></span>
+                      </td>
+                      <td class="py-2.5 px-2">
+                        <span class="font-medium text-slate-800" x-text="op.guruNama"></span>
+                        <span 
+                          class="ml-1 text-[9px] font-bold px-1 rounded-sm"
+                          :class="op.statusAbsen === 'Hadir' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'"
+                          x-text="op.statusAbsen"
+                        ></span>
+                      </td>
+                      <td class="py-2.5 px-2 text-right font-medium text-slate-500" x-text="formatRupiah(op.tagihan)"></td>
+                      <td class="py-2.5 px-2 text-right font-semibold text-emerald-600" x-text="formatRupiah(op.jumlahDiterima)"></td>
+                      <td 
+                        class="py-2.5 px-3 text-right font-bold"
+                        :class="op.saldoSesi === 0 ? 'text-slate-400' : op.saldoSesi > 0 ? 'text-emerald-700' : 'text-rose-600'"
+                        x-text="op.saldoSesi === 0 ? 'Lunas' :
+                                op.saldoSesi > 0 ? '+' + formatRupiah(op.saldoSesi) :
+                                '-' + formatRupiah(Math.abs(op.saldoSesi))"
+                      ></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Signatures (Print-Only layout) -->
+          <div class="hidden print:flex justify-between items-center pt-10 text-xs text-slate-700">
+            <div class="text-center w-1/3">
+              <p>Orang Tua / Wali</p>
+              <br><br><br>
+              <p class="font-bold border-b border-slate-400 pb-1 inline-block px-5" x-text="reportData?.siswa?.namaOrangTua || '..........................'"></p>
+            </div>
+            <div class="text-center w-1/3">
+              <p>Pengelola Bimbel</p>
+              <br><br><br>
+              <p class="font-bold border-b border-slate-400 pb-1 inline-block px-5">BISA Admin</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Navigation Tabs (Moved to Bottom) -->
+    <nav class="bg-white border-t border-slate-100 flex justify-around py-2.5 px-2 shadow-lg relative z-10 no-print">
+      <button 
+        @click="switchTab('dashboard')"
+        class="flex flex-col items-center gap-1 flex-1 text-center py-1 transition-colors"
+        :class="currentTab === 'dashboard' ? 'text-brand-blue font-bold' : 'text-slate-400 hover:text-slate-600'"
+      >
+        <span class="text-xl">📊</span>
+        <span class="text-[10px] tracking-tight">Dashboard</span>
+      </button>
+      <button 
+        @click="switchTab('operasional')"
+        class="flex flex-col items-center gap-1 flex-1 text-center py-1 transition-colors"
+        :class="currentTab === 'operasional' ? 'text-brand-blue font-bold' : 'text-slate-400 hover:text-slate-600'"
+      >
+        <span class="text-xl">📝</span>
+        <span class="text-[10px] tracking-tight">Pertemuan</span>
+      </button>
+      <button 
+        @click="switchTab('siswa')"
+        class="flex flex-col items-center gap-1 flex-1 text-center py-1 transition-colors"
+        :class="currentTab === 'siswa' ? 'text-brand-blue font-bold' : 'text-slate-400 hover:text-slate-600'"
+      >
+        <span class="text-xl">👶</span>
+        <span class="text-[10px] tracking-tight">Siswa</span>
+      </button>
+      <button 
+        @click="switchTab('guru')"
+        class="flex flex-col items-center gap-1 flex-1 text-center py-1 transition-colors"
+        :class="currentTab === 'guru' ? 'text-brand-blue font-bold' : 'text-slate-400 hover:text-slate-600'"
+      >
+        <span class="text-xl">👩‍🏫</span>
+        <span class="text-[10px] tracking-tight">Guru</span>
+      </button>
+      <button 
+        @click="switchTab('raport')"
+        class="flex flex-col items-center gap-1 flex-1 text-center py-1 transition-colors"
+        :class="currentTab === 'raport' ? 'text-brand-blue font-bold' : 'text-slate-400 hover:text-slate-600'"
+      >
+        <span class="text-xl">📄</span>
+        <span class="text-[10px] tracking-tight">Raport/Bill</span>
+      </button>
+    </nav>
+
+    <!-- ======================================================================= -->
+    <!-- MODALS SECTION -->
+    <!-- ======================================================================= -->
+
+    <!-- MODAL 1: SISWA FORM (ADD / EDIT) -->
+    <div 
+      x-show="showSiswaModal" 
+      x-transition
+      class="fixed inset-0 bg-black/60 z-20 flex flex-col justify-end items-center no-print"
+      style="display: none;"
+    >
+      <div 
+        @click.away="showSiswaModal = false"
+        class="bg-white rounded-t-[28px] max-h-[90%] w-full max-w-[480px] flex flex-col shadow-2xl border-t border-slate-100"
+      >
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-[28px]">
+          <h3 class="text-base font-bold text-brand-blue" x-text="isEdit ? 'Ubah Profil Siswa' : 'Tambah Siswa Baru'"></h3>
+          <button @click="showSiswaModal = false" class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold">✕</button>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6 overflow-y-auto space-y-4 text-sm">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap</label>
+            <input type="text" x-model="siswaForm.nama" placeholder="Contoh: Budi Santoso" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-blue" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Asal Sekolah</label>
+              <input type="text" x-model="siswaForm.asalSekolah" placeholder="Contoh: SDN 1 Merdeka" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Jenjang/Kelas</label>
+              <select x-model="siswaForm.jenjangKelas" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+                <option value="Calistung">Calistung</option>
+                <option value="SD 1">SD 1</option>
+                <option value="SD 2">SD 2</option>
+                <option value="SD 3">SD 3</option>
+                <option value="SD 4">SD 4</option>
+                <option value="SD 5">SD 5</option>
+                <option value="SD 6">SD 6</option>
+                <option value="SMP 7">SMP 7</option>
+                <option value="SMP 8">SMP 8</option>
+                <option value="SMP 9">SMP 9</option>
+                <option value="SMA 10">SMA 10</option>
+                <option value="SMA 11">SMA 11</option>
+                <option value="SMA 12">SMA 12</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Jenis Kelas</label>
+              <select x-model="siswaForm.jenisKelas" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+                <option value="Private">Private</option>
+                <option value="Reguler">Reguler</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Tarif Default (Rp)</label>
+              <input type="number" x-model="siswaForm.tarifDefault" placeholder="contoh: 150000" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Orang Tua / Wali</label>
+            <input type="text" x-model="siswaForm.namaOrangTua" placeholder="Contoh: Pak Agus" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">WhatsApp Siswa</label>
+              <input type="text" x-model="siswaForm.whatsappSiswa" placeholder="08xxx" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">WhatsApp Ortu</label>
+              <input type="text" x-model="siswaForm.whatsappOrtu" placeholder="08xxx" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Alamat Rumah</label>
+            <textarea x-model="siswaForm.alamat" placeholder="Jl. Anggrek No. 5..." rows="2" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+          <button @click="showSiswaModal = false" class="flex-1 bg-white border border-slate-200 py-3 rounded-xl font-bold text-slate-700">Batal</button>
+          <button @click="saveSiswa()" class="flex-1 bg-brand-blue text-white py-3 rounded-xl font-bold shadow-md" :disabled="loading">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: GURU FORM (ADD / EDIT) -->
+    <div 
+      x-show="showGuruModal" 
+      x-transition
+      class="fixed inset-0 bg-black/60 z-20 flex flex-col justify-end items-center no-print"
+      style="display: none;"
+    >
+      <div 
+        @click.away="showGuruModal = false"
+        class="bg-white rounded-t-[28px] max-h-[90%] w-full max-w-[480px] flex flex-col shadow-2xl border-t border-slate-100"
+      >
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-[28px]">
+          <h3 class="text-base font-bold text-brand-blue" x-text="isEdit ? 'Ubah Profil Guru' : 'Tambah Guru Baru'"></h3>
+          <button @click="showGuruModal = false" class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold">✕</button>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6 space-y-4 text-sm">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Guru / Tentor</label>
+            <input type="text" x-model="guruForm.nama" placeholder="Contoh: Kak Mega" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-blue" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nomor WhatsApp</label>
+            <input type="text" x-model="guruForm.whatsapp" placeholder="Contoh: 0857xxxxxxx" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-blue" />
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+          <button @click="showGuruModal = false" class="flex-1 bg-white border border-slate-200 py-3 rounded-xl font-bold text-slate-700">Batal</button>
+          <button @click="saveGuru()" class="flex-1 bg-brand-blue text-white py-3 rounded-xl font-bold shadow-md" :disabled="loading">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: OPERASIONAL FORM (ADD / EDIT MEETINGS) -->
+    <div 
+      x-show="showOperasionalModal" 
+      x-transition
+      class="fixed inset-0 bg-black/60 z-20 flex flex-col justify-end items-center no-print"
+      style="display: none;"
+    >
+      <div 
+        @click.away="showOperasionalModal = false"
+        class="bg-white rounded-t-[28px] max-h-[95%] w-full max-w-[480px] flex flex-col shadow-2xl border-t border-slate-100"
+      >
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-[28px]">
+          <h3 class="text-base font-bold text-brand-blue" x-text="isEdit ? 'Ubah Data Pertemuan' : 'Catat Pertemuan Baru'"></h3>
+          <button @click="showOperasionalModal = false" class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold">✕</button>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6 overflow-y-auto space-y-4 text-sm">
+          
+          <!-- Dropdown Siswa (Trigger auto populate default tariff on select!) -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Pilih Siswa</label>
+            <select 
+              x-model="operasionalForm.siswaId"
+              @change="onSiswaSelected()"
+              class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
+              :disabled="isEdit"
+            >
+              <option value="">-- Pilih Siswa --</option>
+              <template x-for="s in siswaList" :key="s.id">
+                <option :value="s.id" x-text="s.nama + ' (' + s.jenisKelas + ')'"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- Dropdown Guru -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Pilih Guru / Tentor</label>
+            <select x-model="operasionalForm.guruId" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+              <option value="">-- Pilih Guru --</option>
+              <template x-for="g in guruList" :key="g.id">
+                <option :value="g.id" x-text="g.nama"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- Date & Absensi -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Tanggal</label>
+              <input type="date" x-model="operasionalForm.tanggal" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Kehadiran (Absensi)</label>
+              <select x-model="operasionalForm.statusAbsen" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Bolos">Bolos</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Class Type (Auto-populated but editable) -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jenis Kelas</label>
+            <select x-model="operasionalForm.jenisKelas" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+              <option value="Private">Private (Billed per meeting)</option>
+              <option value="Reguler">Reguler (Billed per semester/month)</option>
+            </select>
+          </div>
+
+          <!-- Billed Fee (Tagihan) & Paid Cash (Jumlah Diterima) -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Tagihan Hari Ini (Rp)</label>
+              <input type="number" x-model="operasionalForm.tagihan" placeholder="0" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none font-bold" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Uang Diterima (Rp)</label>
+              <input type="number" x-model="operasionalForm.jumlahDiterima" placeholder="0" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-emerald-600 font-bold" />
+            </div>
+          </div>
+
+          <!-- Lesson Notes / Catatan -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Catatan Kegiatan Belajar</label>
+            <textarea x-model="operasionalForm.catatan" placeholder="Contoh: Belajar menulis kata berakhiran -ng. Anak antusias." rows="3" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"></textarea>
+          </div>
+
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+          <button @click="showOperasionalModal = false" class="flex-1 bg-white border border-slate-200 py-3 rounded-xl font-bold text-slate-700">Batal</button>
+          <button @click="saveOperasional()" class="flex-1 bg-brand-blue text-white py-3 rounded-xl font-bold shadow-md" :disabled="loading">Simpan Sesi</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('appState', () => ({
+        currentTab: 'dashboard',
+        loading: false,
+        
+        // Lists
+        siswaList: [],
+        guruList: [],
+        operasionalList: [],
+        summary: {
+          totalSiswa: 0,
+          totalPendapatan: 0,
+          totalPiutang: 0,
+          totalPertemuanBulanIni: 0
+        },
+
+        // Search Queries
+        siswaSearchQuery: '',
+        operasionalSearchQuery: '',
+
+        // Modals Control
+        showSiswaModal: false,
+        showGuruModal: false,
+        showOperasionalModal: false,
+        isEdit: false,
+        editId: '',
+
+        // Form templates
+        siswaForm: {
+          nama: '',
+          whatsappSiswa: '',
+          asalSekolah: '',
+          namaOrangTua: '',
+          whatsappOrtu: '',
+          alamat: '',
+          jenjangKelas: 'SD 1',
+          jenisKelas: 'Private',
+          tarifDefault: 0
+        },
+        guruForm: {
+          nama: '',
+          whatsapp: ''
+        },
+        operasionalForm: {
+          tanggal: '',
+          siswaId: '',
+          guruId: '',
+          jenisKelas: 'Private',
+          statusAbsen: 'Hadir',
+          tagihan: 0,
+          jumlahDiterima: 0,
+          catatan: ''
+        },
+
+        // Reports View
+        selectedReportSiswaId: '',
+        reportData: null,
+
+        async init() {
+          await this.loadAllData();
+        },
+
+        // Load all data from API endpoints
+        async loadAllData() {
+          this.loading = true;
+          try {
+            const [resSiswa, resGuru, resOps, resSum] = await Promise.all([
+              fetch('/api/siswa'),
+              fetch('/api/guru'),
+              fetch('/api/operasional'),
+              fetch('/api/dashboard/summary')
+            ]);
+
+            if (resSiswa.ok) this.siswaList = await resSiswa.json();
+            if (resGuru.ok) this.guruList = await resGuru.json();
+            if (resOps.ok) this.operasionalList = await resOps.json();
+            if (resSum.ok) this.summary = await resSum.json();
+            
+            // Reload report if a student is already selected
+            if (this.selectedReportSiswaId) {
+              await this.fetchReport(this.selectedReportSiswaId);
+            }
+          } catch (err) {
+            console.error('Error loading data:', err);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        switchTab(tab) {
+          this.currentTab = tab;
+          this.loadAllData();
+        },
+
+        // ==========================================
+        // SEARCH FILTERS
+        // ==========================================
+        get filteredSiswa() {
+          const query = this.siswaSearchQuery.toLowerCase();
+          return this.siswaList.filter(s => 
+            s.nama.toLowerCase().includes(query) ||
+            s.asalSekolah.toLowerCase().includes(query) ||
+            (s.namaOrangTua && s.namaOrangTua.toLowerCase().includes(query))
+          );
+        },
+
+        get filteredOperasional() {
+          const query = this.operasionalSearchQuery.toLowerCase();
+          return this.operasionalList.filter(op => 
+            op.siswaNama.toLowerCase().includes(query) ||
+            op.guruNama.toLowerCase().includes(query) ||
+            (op.catatan && op.catatan.toLowerCase().includes(query))
+          );
+        },
+
+        // ==========================================
+        // SISWA OPERATIONS
+        // ==========================================
+        openSiswaModal() {
+          this.isEdit = false;
+          this.siswaForm = {
+            nama: '',
+            whatsappSiswa: '',
+            asalSekolah: '',
+            namaOrangTua: '',
+            whatsappOrtu: '',
+            alamat: '',
+            jenjangKelas: 'SD 1',
+            jenisKelas: 'Private',
+            tarifDefault: 150000
+          };
+          this.showSiswaModal = true;
+        },
+
+        openEditSiswa(siswa) {
+          this.isEdit = true;
+          this.editId = siswa.id;
+          this.siswaForm = { ...siswa };
+          this.showSiswaModal = true;
+        },
+
+        async saveSiswa() {
+          if (!this.siswaForm.nama.trim()) {
+            alert('Nama siswa tidak boleh kosong!');
+            return;
+          }
+          this.loading = true;
+          try {
+            const url = this.isEdit ? `/api/siswa/${this.editId}` : '/api/siswa';
+            const method = this.isEdit ? 'PUT' : 'POST';
+            
+            const res = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.siswaForm)
+            });
+
+            if (res.ok) {
+              this.showSiswaModal = false;
+              await this.loadAllData();
+            } else {
+              const err = await res.json();
+              alert(err.error || 'Terjadi kesalahan saat menyimpan data siswa.');
+            }
+          } catch (err) {
+            alert('Kesalahan jaringan: ' + err.message);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async deleteSiswa(id) {
+          if (!confirm('Hapus siswa ini? Semua riwayat pertemuannya juga harus disesuaikan secara manual.')) return;
+          this.loading = true;
+          try {
+            const res = await fetch(`/api/siswa/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+              await this.loadAllData();
+            } else {
+              alert('Gagal menghapus siswa.');
+            }
+          } catch (err) {
+            alert('Kesalahan jaringan: ' + err.message);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        // ==========================================
+        // GURU OPERATIONS
+        // ==========================================
+        openGuruModal() {
+          this.isEdit = false;
+          this.guruForm = { nama: '', whatsapp: '' };
+          this.showGuruModal = true;
+        },
+
+        openEditGuru(guru) {
+          this.isEdit = true;
+          this.editId = guru.id;
+          this.guruForm = { ...guru };
+          this.showGuruModal = true;
+        },
+
+        async saveGuru() {
+          if (!this.guruForm.nama.trim()) {
+            alert('Nama guru tidak boleh kosong!');
+            return;
+          }
+          this.loading = true;
+          try {
+            const url = this.isEdit ? `/api/guru/${this.editId}` : '/api/guru';
+            const method = this.isEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.guruForm)
+            });
+
+            if (res.ok) {
+              this.showGuruModal = false;
+              await this.loadAllData();
+            } else {
+              alert('Gagal menyimpan profil guru.');
+            }
+          } catch (err) {
+            alert('Kesalahan jaringan: ' + err.message);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async deleteGuru(id) {
+          if (!confirm('Hapus data guru ini?')) return;
+          this.loading = true;
+          try {
+            const res = await fetch(`/api/guru/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+              await this.loadAllData();
+            } else {
+              alert('Gagal menghapus data guru.');
+            }
+          } catch (err) {
+            alert('Kesalahan jaringan: ' + err.message);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        // ==========================================
+        // OPERASIONAL (PERTEMUAN) OPERATIONS
+        // ==========================================
+        openOperasionalModal() {
+          this.isEdit = false;
+          this.operasionalForm = {
+            tanggal: new Date().toISOString().split('T')[0],
+            siswaId: '',
+            guruId: this.guruList[0]?.id || '',
+            jenisKelas: 'Private',
+            statusAbsen: 'Hadir',
+            tagihan: 0,
+            jumlahDiterima: 0,
+            catatan: ''
+          };
+          this.showOperasionalModal = true;
+        },
+
+        openEditOperasional(op) {
+          this.isEdit = true;
+          this.editId = op.id;
+          this.operasionalForm = { ...op };
+          this.showOperasionalModal = true;
+        },
+
+        // Auto fills class type and rate defaults on student select
+        onSiswaSelected() {
+          const selectedSiswa = this.siswaList.find(s => s.id === this.operasionalForm.siswaId);
+          if (selectedSiswa) {
+            this.operasionalForm.jenisKelas = selectedSiswa.jenisKelas;
+            
+            // If private, prefill session rate. If regular, prefill default monthly only on first log
+            if (selectedSiswa.jenisKelas === 'Private') {
+              this.operasionalForm.tagihan = selectedSiswa.tarifDefault;
+            } else {
+              // Regular default is 0 for normal attendance; they can write tagihan manually when bill is created
+              this.operasionalForm.tagihan = 0; 
+            }
+          }
+        },
+
+        async saveOperasional() {
+          if (!this.operasionalForm.siswaId) {
+            alert('Silakan pilih siswa!');
+            return;
+          }
+          if (!this.operasionalForm.guruId) {
+            alert('Silakan pilih guru!');
+            return;
+          }
+          this.loading = true;
+          try {
+            const url = this.isEdit ? `/api/operasional/${this.editId}` : '/api/operasional';
+            const method = this.isEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.operasionalForm)
+            });
+
+            if (res.ok) {
+              this.showOperasionalModal = false;
+              await this.loadAllData();
+            } else {
+              alert('Gagal menyimpan data operasional pertemuan.');
+            }
+          } catch (err) {
+            alert('Kesalahan jaringan: ' + err.message);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async deleteOperasional(id) {
+          if (!confirm('Hapus catatan pertemuan ini?')) return;
+          this.loading = true;
+          try {
+            const res = await fetch(`/api/operasional/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+              await this.loadAllData();
+            } else {
+              alert('Gagal menghapus pertemuan.');
+            }
+          } catch (err) {
+            alert('Kesalahan jaringan: ' + err.message);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        // ==========================================
+        // LEDGER REPORT (RAPORT LES)
+        // ==========================================
+        async fetchReport(siswaId) {
+          if (!siswaId) {
+            this.reportData = null;
+            return;
+          }
+          this.loading = true;
+          try {
+            const res = await fetch(`/api/laporan/siswa/${siswaId}`);
+            if (res.ok) {
+              this.reportData = await res.json();
+            } else {
+              alert('Gagal memuat laporan siswa.');
+            }
+          } catch (err) {
+            console.error('Error fetching report:', err);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        // Send a direct polite reminder message to the Parent's WhatsApp
+        sendWhatsAppReminder(siswa) {
+          const nominalAbs = Math.abs(siswa.saldo);
+          const formattedNominal = this.formatRupiah(nominalAbs);
+          
+          const textMessage = `Halo Bapak/Ibu *${siswa.namaOrangTua}* dari siswa *${siswa.nama}*.\n\n` +
+            `Kami menginfokan ringkasan tagihan iuran bimbingan belajar per tanggal *${this.formatSimpleDate(new Date().toISOString().split('T')[0])}*:\n` +
+            `- Status Keuangan: *Kekurangan Bayar*\n` +
+            `- Nominal Tagihan: *${formattedNominal}*\n\n` +
+            `Mohon untuk melakukan penyelesaian administrasi bimbel. Jika membutuhkan rincian daftar kehadiran dan pembayaran, kami siap mengirimkan Raport Les digital. Terima kasih banyak atas perhatiannya. 🙏`;
+
+          const waUrl = `https://wa.me/${this.formatPhoneNumber(siswa.whatsappOrtu)}?text=${encodeURIComponent(textMessage)}`;
+          window.open(waUrl, '_blank');
+        },
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+        formatRupiah(num) {
+          if (num === undefined || num === null) return 'Rp 0';
+          return 'Rp ' + Number(num).toLocaleString('id-ID');
+        },
+
+        formatSimpleDate(dateString) {
+          if (!dateString) return '';
+          const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+          return new Date(dateString).toLocaleDateString('id-ID', opts);
+        },
+
+        formatPhoneNumber(phone) {
+          if (!phone) return '';
+          // Remove spaces, dashes, parentheses
+          let cleaned = phone.replace(/[^0-9]/g, '');
+          // If starts with 0, replace with country code 62
+          if (cleaned.startsWith('0')) {
+            cleaned = '62' + cleaned.substring(1);
+          }
+          return cleaned;
+        }
+      }));
+    });
+  </script>
+</body>
+</html>

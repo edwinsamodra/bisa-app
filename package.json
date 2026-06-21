@@ -1,0 +1,13 @@
+{
+  "name": "bisa",
+  "version": "1.0.0",
+  "description": "Simple scaffolding with Node.js, Express, Alpine.js, Tailwind CSS CDN, and JSON storage",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

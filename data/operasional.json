@@ -1,0 +1,75 @@
+[
+  {
+    "id": "mqnk72sgfdmm1",
+    "createdAt": "2026-06-21T09:03:15.424Z",
+    "tanggal": "2026-06-21",
+    "siswaId": "mqnk64wbmltqb",
+    "guruId": "mqnk6geq7qmvp",
+    "jenisKelas": "Private",
+    "statusAbsen": "Hadir",
+    "tagihan": 100000,
+    "jumlahDiterima": 500000,
+    "catatan": "",
+    "updatedAt": "2026-06-21T09:06:32.204Z"
+  },
+  {
+    "id": "mqnk7nh43r41c",
+    "createdAt": "2026-06-21T09:03:42.232Z",
+    "tanggal": "2026-06-21",
+    "siswaId": "mqnk64wbmltqb",
+    "guruId": "mqnk6geq7qmvp",
+    "jenisKelas": "Private",
+    "statusAbsen": "Hadir",
+    "tagihan": 100000,
+    "jumlahDiterima": 0,
+    "catatan": ""
+  },
+  {
+    "id": "mqnk7w9a47xod",
+    "createdAt": "2026-06-21T09:03:53.614Z",
+    "tanggal": "2026-06-21",
+    "siswaId": "mqnk64wbmltqb",
+    "guruId": "mqnk6geq7qmvp",
+    "jenisKelas": "Private",
+    "statusAbsen": "Hadir",
+    "tagihan": 100000,
+    "jumlahDiterima": 0,
+    "catatan": ""
+  },
+  {
+    "id": "mqnk87mleyebh",
+    "createdAt": "2026-06-21T09:04:08.349Z",
+    "tanggal": "2026-06-21",
+    "siswaId": "mqnk64wbmltqb",
+    "guruId": "mqnk6geq7qmvp",
+    "jenisKelas": "Private",
+    "statusAbsen": "Hadir",
+    "tagihan": 100000,
+    "jumlahDiterima": 0,
+    "catatan": ""
+  },
+  {
+    "id": "mqnk8hqwd28kz",
+    "createdAt": "2026-06-21T09:04:21.464Z",
+    "tanggal": "2026-06-21",
+    "siswaId": "mqnk64wbmltqb",
+    "guruId": "mqnk6geq7qmvp",
+    "jenisKelas": "Private",
+    "statusAbsen": "Hadir",
+    "tagihan": 100000,
+    "jumlahDiterima": 0,
+    "catatan": ""
+  },
+  {
+    "id": "mqnk9kp5so2fs",
+    "createdAt": "2026-06-21T09:05:11.945Z",
+    "tanggal": "2026-06-21",
+    "siswaId": "mqnk64wbmltqb",
+    "guruId": "mqnk6geq7qmvp",
+    "jenisKelas": "Private",
+    "statusAbsen": "Hadir",
+    "tagihan": 100000,
+    "jumlahDiterima": 0,
+    "catatan": ""
+  }
+]
